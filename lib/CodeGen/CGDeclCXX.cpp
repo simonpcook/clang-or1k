@@ -163,6 +163,9 @@ static llvm::Constant *createAtExitStub(CodeGenModule &CGM,
 
   CodeGenFunction CGF(CGM);
 
+  // Initialize debug info if needed.
+  CGF.maybeInitializeDebugInfo();
+
   CGF.StartFunction(GlobalDecl(), CGM.getContext().VoidTy, fn,
                     CGM.getTypes().arrangeNullaryFunction(),
                     FunctionArgList(), SourceLocation());
@@ -229,7 +232,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
     Fn->setDoesNotThrow();
 
   if (CGM.getLangOpts().AddressSanitizer)
-    Fn->addFnAttr(llvm::Attribute::AddressSafety);
+    Fn->addFnAttr(llvm::Attributes::AddressSafety);
 
   return Fn;
 }
@@ -321,8 +324,9 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                        const VarDecl *D,
                                                  llvm::GlobalVariable *Addr,
                                                        bool PerformInit) {
-  if (CGM.getModuleDebugInfo() && !D->hasAttr<NoDebugAttr>())
-    DebugInfo = CGM.getModuleDebugInfo();
+  // Check if we need to emit debug info for variable initializer.
+  if (!D->hasAttr<NoDebugAttr>())
+    maybeInitializeDebugInfo();
 
   StartFunction(GlobalDecl(D), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
@@ -344,6 +348,9 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 llvm::Constant **Decls,
                                                 unsigned NumDecls) {
+  // Initialize debug info if needed.
+  maybeInitializeDebugInfo();
+
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
@@ -369,6 +376,9 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
 void CodeGenFunction::GenerateCXXGlobalDtorsFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
+  // Initialize debug info if needed.
+  maybeInitializeDebugInfo();
+
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
@@ -404,6 +414,9 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
+
+  // Initialize debug info if needed.
+  maybeInitializeDebugInfo();
 
   StartFunction(GlobalDecl(), getContext().VoidTy, fn, FI, args,
                 SourceLocation());

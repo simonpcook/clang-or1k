@@ -303,6 +303,10 @@ def StreamChecker : Checker<"Stream">,
   HelpText<"Check stream handling functions">,
   DescFile<"StreamChecker.cpp">;
 
+def SimpleStreamChecker : Checker<"SimpleStream">,
+  HelpText<"Check for misuses of stream APIs">,
+  DescFile<"SimpleStreamChecker.cpp">;
+
 } // end "alpha.unix"
 
 let ParentPackage = CString in {
@@ -341,11 +345,6 @@ def MacOSXAPIChecker : Checker<"API">,
   InPackage<OSX>,
   HelpText<"Check for proper uses of various Mac OS X APIs">,
   DescFile<"MacOSXAPIChecker.cpp">;
-
-def OSAtomicChecker : Checker<"AtomicCAS">,
-  InPackage<OSX>,
-  HelpText<"Evaluate calls to OSAtomic functions">,
-  DescFile<"OSAtomicChecker.cpp">;
 
 def MacOSKeychainAPIChecker : Checker<"SecKeychainAPI">,
   InPackage<OSX>,
@@ -420,6 +419,10 @@ def IvarInvalidationChecker : Checker<"InstanceVariableInvalidation">,
 def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
   HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
   DescFile<"DirectIvarAssignment.cpp">;
+
+def ObjCSuperCallChecker : Checker<"MissingSuperCall">,
+  HelpText<"Warn about Objective-C methods that lack a necessary call to super">,
+  DescFile<"ObjCMissingSuperCallChecker.cpp">;
 
 } // end "alpha.osx.cocoa"
 
